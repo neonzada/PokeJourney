@@ -4,27 +4,71 @@ import matplotlib.pyplot as plt
 import pokes
 import random
 from rich.console import Console
+from rich.columns import Columns
+from rich.table import Table
 
 # Maximum number of pokemons allowed to fight in an instance of a battle
 #MAX_POKES = 3
+console = Console()
 
 # Player class with name, current pokemons and current potions
 class Player:
-  def __init__(self, name, pokes, potions):
+  def __init__(self, name, currentPoke):
     self.name = name
-    self.pokes = pokes
-    self.potions = potions
+    self.currentPoke = currentPoke
+    #self.potions = potions
+
+# Pokemon class
+# class Pokemon:
+#   def __init__(self, name, hp, attack, defense, spatk, spdef, speed):
+#     self.name = name
+#     self.hp = hp
+#     self.attack = attack
+#     self.defense = defense
+#     self.spatk = spatk
+#     self.spdef = spdef
+#     self.speed = speed
+
+def printPoke(pokes_infos):
+
+  table = Table()
+
+  for poke_info in pokes_infos:
+    stats = {stat["stat"]["name"]: stat["base_stat"] for stat in poke_info["stats"]}
+    name = poke_info["name"]
+
+    table.add_column(name)
+    for stat_name, stat_value in stats.items():
+      table.add_row(f"{stat_name}: {stat_value}")
+  
+  console.print(table)
 
 
-def initFight():
+# TODO: possible refactor
+def initFight(player):
+  plt.close('all')
+  poke = pokes.get_poke(player.currentPoke)
+
   id = random.randrange(1, 1025, 1)
-  poke_info = pokes.get_poke(id)
-  stats = {stat["stat"]["name"]: stat["base_stat"] for stat in poke_info["stats"]}
-  name = poke_info["name"]
-  print(f"\nname: {name}")
-  print("\nstats:")
-  for stat_name, stat_value in stats.items():
-    print(f"{stat_name}: {stat_value}")
+  enemyPoke = pokes.get_poke(id)
+
+  while enemyPoke["stats"][0]["base_stat"] > 0 and poke["stats"][0]["base_stat"] > 0:
+    printPoke([poke, enemyPoke])
+    console.print("[1] Attack\t[2] Block\t[3] Potions\t[4] Catch")
+    sel = input()
+    match sel:
+      case '1':
+        enemyPoke["stats"][0]["base_stat"] -= poke["stats"][1]["base_stat"]
+
+      case '2':
+        pass
+      case '3':
+        pass
+      case '4':
+        pass
+      case _:
+        print("Invalid input")
+
 
 def updateNodes(G, source, dest, visited):
   plt.close('all')
@@ -54,6 +98,7 @@ def updateNodes(G, source, dest, visited):
   plt.axis("off")
   plt.tight_layout()
   plt.gcf().set_size_inches(12, 7)  #12x7 inches
+  plt.gcf().canvas.manager.set_window_title("PokeJourney")
   plt.show(block=False) #doesn't hang code
 
 
@@ -61,7 +106,12 @@ def main():
   Config = configparser.ConfigParser()
   Config.read("config.ini")
 
-  console = Console()
+  starterPoke = Config['Pokes']['Starter']
+  print(starterPoke)
+
+  console.print("Please type your name: ")
+  name = input()
+  player = Player(name, starterPoke)
 
   # Creating the graph
   G = nx.Graph()
@@ -80,7 +130,7 @@ def main():
 
   console.print(f"\n\nShortest path: {nx.dijkstra_path(G, source, dest)}", style="bold red")
   console.print(f"Length: {nx.dijkstra_path_length(G, source, dest)}", style="bold red")
-  console.print("TIP: you can quit at any time by typing 'q'.", style="green")
+  console.print("TIP: you can quit on this screen by typing 'q'.", style="green")
 
   # Initialize list of visited nodes
   visited = [source]
@@ -93,9 +143,11 @@ def main():
     console.print("Where do you want to go?")
     for i, place in enumerate(G.nodes):
       if place == source:
-        console.print(f"[{i}] - {place} (YOU ARE HERE)")
+        console.print(f"[{i}] - {place} [bold green](YOU ARE HERE)[/bold green]")
+      elif place == dest:
+        console.print(f"[{i}] - {place} [bold red](YOUR OBJECTIVE)[/bold red]")
       else:
-        console.print(f"[{i}] - {place}")
+        console.print(f"[{i}] - [white]{place}[/white]")
 
     x = input()
     if x == 'q':
@@ -118,10 +170,11 @@ def main():
             if place not in visited:
               visited.append(place)
               #print(visited.__len__())
-              initFight()
+              initFight(player)
             
             console.print(f"current: {place}", style="green")
             updateNodes(G, place, dest, visited)
+            source = place
       
       else:
         print("Invalid index")

@@ -1,17 +1,37 @@
-Coisas feitas até agora:
+# PokeJourney
+
+Bem vindo à PokeJourney!
+
+Essa aventura se passa em uma cidade mapeada por meio de grafos, onde cada localização é um nó conectado por caminhos de diferentes distâncias.
+
+Nesse jogo, você deverá passar por cada local antes de enfrentar o chefe da cidade, batalhando e gerenciando seus recursos ao longo do caminho.
+
+Para ajudá-lo nessa jornada, seu movimento é dado pelo algoritmo de Dijkstra, que calcula a melhor rota até o destino escolhido, permitindo que você otimize seu tempo e recursos.
+
+_Esse jogo foi desenvolvido por Allan Duarte Ehlert para o projeto final da cadeira Algoritmos e Estruturas de Dados II._
+
+## Como jogar
+1. No terminal, selecione o local que você deseja visitar digitando o número associado com o grafo.
+2. Se você ainda não visitou o local que está nesse momento, você entrará em uma batalha (ainda não implementado).
+3. Ganhe o jogo passando por todas as batalhas e derrotando o chefe da cidade!
+
+## Como rodar
+```
+$ pip install -r requirements.txt
+$ python main.py
+```
+
+## Detalhes Técnicos
+
+### Coisas feitas até agora:
 - Criação e leitura do arquivo .ini contendo as configurações das localizações e pokémons;
-- Representação dos caminhos utilizando grafos (biblioteca networkx);
-- Começo e fim coloridos em verde e vermelho respectivamente;
+- Representação dos caminhos utilizando grafos coloridos (utilizando networkx);
 - Movimentação pelo terminal (calcula a rota mais curta usando Dijkstra e realiza os movimentos);
-- Atualização dinâmica do mapa ao movimentar-se.
+- Atualização dinâmica do mapa ao movimentar-se;
+- CLI interface bonita (mais ou menos :P)
 
-Coisas para fazer:
-- Movimentação atualizada pelo terminal (perguntar para o usuário um numero, o qual será mostrado no grafo)
-
-O jogo se desenvolverá da seguinte forma:
-- Utilizando grafos, mapeamos uma "cidade" para o jogador se locomover, com diferentes distâncias.
-- O jogador poderá planejar essas rotas, tendo como condição de vitória a passagem por todos os locais antes de enfrentar o boss.
-- Para calcular a melhor rota até o ginásio final percorrendo todos os locais será implementado algum algoritmo ainda não definido.
-- Conceitos de OOP serão aplicados para o desenvolvimento do sistema de gerenciamento de recursos do jogador.
-- Seguir as mecânicas de batalha descritas no arquivo (pois nunca joguei Pokémon :P)
-- Se houver tempo, fazer uma interface gráfica bonitinha.
+### Coisas para fazer:
+- Sistema de batalha;
+- Greedy algo com os stats dos pokemons (auto-play);
+- Classes e conceitos de OOP para gerenciamento de recursos;
+- Melhorar a UI.
