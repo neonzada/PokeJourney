@@ -3,6 +3,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import pokes
 import random
+import math
 from rich.console import Console
 from rich.columns import Columns
 from rich.table import Table
@@ -34,38 +35,85 @@ def printPoke(pokes_infos):
   table = Table()
 
   for poke_info in pokes_infos:
-    stats = {stat["stat"]["name"]: stat["base_stat"] for stat in poke_info["stats"]}
     name = poke_info["name"]
+    table.add_column(name, justify="center")
 
-    table.add_column(name)
-    for stat_name, stat_value in stats.items():
-      table.add_row(f"{stat_name}: {stat_value}")
-  
+  rows = []
+  for poke_info in pokes_infos:
+    stats = {stat["stat"]["name"]: stat["base_stat"] for stat in poke_info["stats"]}
+    rows.append(stats)
+
+  for stat_name in rows[0].keys():
+    row = []
+    for stats in rows:
+      row.append(f"{stat_name}: {stats[stat_name]}")
+    table.add_row(*row)
+
   console.print(table)
 
+# Auto-battle implementation using greedy algorithms: always choose the best ratio between atk/def and sp-atk/sp-def
+# Returns true if sp-atk/sp-def >= atk/def, false otherwise
+def greedyATK(poke, enemyPoke):
+  return True if ((poke["stats"][3]["base_stat"] / enemyPoke["stats"][4]["base_stat"]) >= (poke["stats"][1]["base_stat"] / enemyPoke["stats"][2]["base_stat"])) else False
 
-# TODO: possible refactor
+def attackCheck(attacker, receiver, special):
+  if special:
+    # Special attack is calculated as follows: 0.75 to 1.25 random multiplier of the attackers' SP-ATK minus 40-60% of receivers' SP-DEF
+    atk = math.floor(random.randrange(75,125) * 0.01 * (attacker["stats"][3]["base_stat"] - (random.randrange(40, 60) * 0.01 * receiver["stats"][4]["base_stat"])))
+  else:
+    # Basic attack is calculated as follows: 0.75 to 1.25 random multiplier of the attackers' ATK minus 5-15% of receivers' DEF
+    atk = math.floor(random.randrange(75,125) * 0.01 * (attacker["stats"][1]["base_stat"] - (random.randrange(5, 15) * 0.01 * receiver["stats"][2]["base_stat"])))
+
+  receiver["stats"][0]["base_stat"] -= atk
+
+  console.print(f"{attacker['name']} dealt [bold red]{atk}[/bold red] damage to {receiver['name']}!")
+  if receiver["stats"][0]["base_stat"] <= 0:
+    console.print(f"{attacker['name']} wins!")
+    return True
+  else:
+    return False
+
+# TODO: special attacks reserved only for the boss (25% chance of triggering it, warning before)
+# please for the love of god check if the poke is negative health
 def initFight(player):
   plt.close('all')
-  poke = pokes.get_poke(player.currentPoke)
+  console.clear()
+  poke = player.currentPoke
 
   id = random.randrange(1, 1025, 1)
   enemyPoke = pokes.get_poke(id)
 
-  while enemyPoke["stats"][0]["base_stat"] > 0 and poke["stats"][0]["base_stat"] > 0:
+  enemyName = enemyPoke["name"]
+  playerName = poke["name"]
+
+  while True:
     printPoke([poke, enemyPoke])
-    console.print("[1] Attack\t[2] Block\t[3] Potions\t[4] Catch")
+    console.print("[1] Attack\t[2 Special]\t[3] Block\t[4] Potions\t[5] Catch\t[6] Auto")
     sel = input()
     match sel:
       case '1':
-        enemyPoke["stats"][0]["base_stat"] -= poke["stats"][1]["base_stat"]
+        if attackCheck(poke, enemyPoke, False): break
+        if attackCheck(enemyPoke, poke, False): break
 
-      case '2':
-        pass
       case '3':
-        pass
+        # defend heavily the next attack (can be used for special attacks in boss)
+        poke["stats"][2]["base_stat"] *= 2
+        if attackCheck(enemyPoke, poke): break
+        poke["stats"][2]["base_stat"] /= 2
+
       case '4':
+        # loop through every potion that the player has
         pass
+      case '5':
+        # 
+        #if random.randrange(0, 10, 1) > 5 + 
+        pass
+      case '6':
+        isSpecial = greedyATK(poke, enemyPoke)
+        while True:
+          if attackCheck(poke, enemyPoke, isSpecial) : break
+          if attackCheck(enemyPoke, poke, False) : break
+        break
       case _:
         print("Invalid input")
 
@@ -106,8 +154,7 @@ def main():
   Config = configparser.ConfigParser()
   Config.read("config.ini")
 
-  starterPoke = Config['Pokes']['Starter']
-  print(starterPoke)
+  starterPoke = pokes.get_poke(Config['Pokes']['Starter'])
 
   console.print("Please type your name: ")
   name = input()
