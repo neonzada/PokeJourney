@@ -1,10 +1,8 @@
-from rich.console import Console
 from rich.table import Table
 import networkx as nx
 import matplotlib.pyplot as plt
 
 def printPoke(pokes_infos, console):
-
   table = Table()
 
   for poke_info in pokes_infos:
@@ -26,11 +24,9 @@ def printPoke(pokes_infos, console):
 
 def updateNodes(G, source, dest, visited):
   plt.close('all')
-
-  # Graph settings
   pos = nx.spring_layout(G, weight=None, seed=7)
 
-  # Nodes and edges
+  #nodes and edges
   color_map = ['green' if node == source 
                 else 'red' if node == dest
                 else 'blue' if node in visited
@@ -41,12 +37,11 @@ def updateNodes(G, source, dest, visited):
   nx.draw_networkx_edges(G, pos, width=2, alpha=0.5)
   nx.draw_networkx_labels(G, pos, font_size=8, font_family="sans-serif", font_weight="bold")
 
-  # Weights
+  #weights
   edge_labels = nx.get_edge_attributes(G, "weight")
   nx.draw_networkx_edge_labels(G, pos, edge_labels, font_size=6)
 
-
-  # Matplotlib visualization
+  #matplotlib visualization
   ax = plt.gca()
   ax.margins(0.08)
   plt.axis("off")

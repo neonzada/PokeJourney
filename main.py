@@ -2,6 +2,7 @@ import configparser
 import UI
 import Engine
 import Pokes
+import time
 import networkx as nx
 from rich.console import Console
 
@@ -11,9 +12,9 @@ from rich.console import Console
 
 # Player class with name, current pokemons and current potions
 class Player:
-  def __init__(self, name, currentPoke):
-    self.name = name
+  def __init__(self, currentPoke, pokeList):
     self.currentPoke = currentPoke
+    self.pokeList = pokeList
     #self.potions = potions
 
 # Pokemon class
@@ -28,28 +29,29 @@ class Player:
 #     self.speed = speed
 
 def main():
+  godmode = False #for debugging purposes
+
   Config = configparser.ConfigParser()
-  Config.read("config.ini")
-
-  starterPoke = Pokes.get_poke(Config['Pokes']['Starter'])
- 
   console = Console()
-
-  console.print("Please type your name: ")
-  name = input()
-  player = Player(name, starterPoke)
-
   G = nx.Graph()
+  
+  Config.read("config.ini")
+  starterPoke = Pokes.get_poke(Config['Pokes']['Starter'])
+  bossPoke = Pokes.get_poke(Config['Pokes']['Rival'])
 
-  # Adding edges by reading .ini file
+  if godmode:
+    for stat_entry in starterPoke["stats"]:
+      stat_entry["base_stat"] = 9999
+
+  player = Player(starterPoke, [starterPoke])
+
+  #adding edges by reading .ini file
   locs = Config.sections()[2:]
-
   for location in locs:
     for key in Config[location]:
       G.add_edge(location, key, weight=int(Config[location][key]))
 
-
-  # Calculates the shortest distance between spawnpoint and the objective using dijkstra's shortest path algorithm and prints just for the heck of it
+  #shortest distance between spawnpoint and the objective using dijkstra's shortest path algorithm and prints just for the heck of it
   source = Config['Locations']['Spawnpoint']
   dest = Config['Locations']['FinalBattle']
 
@@ -57,13 +59,14 @@ def main():
   console.print(f"Length: {nx.dijkstra_path_length(G, source, dest)}", style="bold red")
   console.print("TIP: you can quit on this screen by typing 'q'.", style="green")
 
-  # Initialize list of visited nodes
+  #init list of visited nodes
   visited = [source]
   win_condition = False
+  running = True
   UI.updateNodes(G, source, dest, visited)
 
-  #gameloop while player hasn't won the game yet
-  while not win_condition:
+  #gameloop
+  while running:
     console.print(f"visited nodes: {visited}")
     console.print("Where do you want to go?")
     for i, place in enumerate(G.nodes):
@@ -81,20 +84,32 @@ def main():
     if x.isdigit():
       x = int(x)
       if 0 <= x < len(G.nodes):
-        # Calculates the shortest path to the specified location using dijkstra's algorithm
+        #calculates the shortest path to the specified location using dijkstra's algorithm
         route = nx.dijkstra_path(G, source, list(G.nodes)[x])
         for place in route:
+          #check if already dead lol
+          if not running:
+            break
 
-          # Check if the player hasn't cleared the map yet
-          if place == dest and visited.__len__() < G.number_of_nodes():
-            console.print("[bold red]This place is only for those who stand at the top.[/bold red]")
+          #check if the player hasn't cleared the map yet
+          if place == dest:
+            if visited.__len__() < G.number_of_nodes() - 1:
+              console.print("[bold red]This place is only for those who stand at the top.[/bold red]")
+              time.sleep(1.5)
+            else:
+              console.print("[bold red]Entering boss fight...[/bold red]")
+              time.sleep(1.5)
+              win_condition = True if Engine.initFight(player, bossPoke, console) else False
+              running = False
           
-          # If not, proceed to execute normal game logic
+          #if not, proceed to execute normal game logic
           else:
             if place not in visited:
               visited.append(place)
-              Engine.initFight(player, console)
+              if Engine.initFight(player, False, console) == False:
+                running = False #if player doesn't survive, break loop and end game
             
+
             console.print(f"current: {place}", style="green")
             UI.updateNodes(G, place, dest, visited)
             source = place
@@ -104,6 +119,10 @@ def main():
     else:
       print("Invalid input")
 
+  if(win_condition):
+    console.print("Congratulations, you beat the [bold red]final boss[/bold red] and won the PokeJourney!")
+  else:
+    console.print("[bold red]Game over![/bold red]")
 
 if __name__ == '__main__':
   main()

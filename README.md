@@ -28,10 +28,9 @@ $ python main.py
 - Representação dos caminhos utilizando grafos coloridos (utilizando networkx);
 - Movimentação pelo terminal (calcula a rota mais curta usando Dijkstra e realiza os movimentos);
 - Atualização dinâmica do mapa ao movimentar-se;
-- CLI interface bonita (mais ou menos :P)
+- CLI bonita (mais ou menos :P);
+- Greedy auto-battle.
 
 ### Coisas para fazer:
-- Sistema de batalha;
-- Greedy algo com os stats dos pokemons (auto-play);
-- Classes e conceitos de OOP para gerenciamento de recursos;
+- Classes e conceitos de OOP para gerenciamento de recursos (e melhor clareza do código);
 - Melhorar a UI.

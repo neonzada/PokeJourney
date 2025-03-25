@@ -1,3 +1,5 @@
+#it would be nice to make other functions here but nahh...
+
 import requests
 
 base_url = "https://pokeapi.co/api/v2/"
